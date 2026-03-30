@@ -1,1 +1,225 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ბარკოდის გენერატორი</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        /* თანამედროვე UI/UX სტილები */
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --success-color: #10b981;
+            --success-hover: #059669;
+            --bg-color: #f3f4f6;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: white;
+            padding: 2.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            color: var(--text-main);
+            margin-top: 0;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-print {
+            background-color: var(--success-color);
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .btn-print:hover {
+            background-color: var(--success-hover);
+        }
+
+        #barcode-container {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px dashed #d1d5db;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        #barcode {
+            max-width: 100%;
+            height: auto;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ბეჭდვის სტილები: მალავს ყველაფერს ბარკოდის გარდა */
+        @media print {
+            body {
+                background: white;
+                display: block;
+                padding: 0;
+                margin: 0;
+            }
+            .container {
+                box-shadow: none;
+                max-width: none;
+                padding: 0;
+                border-radius: 0;
+            }
+            h2, .input-group, #generate-btn, .btn-print, #barcode-container {
+                border-top: none;
+                padding-top: 0;
+                margin-top: 0;
+            }
+            h2, .input-group, #generate-btn, .btn-print {
+                display: none !important;
+            }
+            #barcode-container {
+                display: flex !important;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>ბარკოდის გენერატორი</h2>
+        
+        <div class="input-group">
+            <label for="moveId">მოძრაობის ID</label>
+            <input type="text" id="moveId" placeholder="მაგ: 1080060" autocomplete="off" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="boxId">ყუთის ID</label>
+            <input type="text" id="boxId" placeholder="მაგ: 6" autocomplete="off" required>
+        </div>
+        
+        <button id="generate-btn" class="btn">გენერაცია</button>
+
+        <div id="barcode-container">
+            <svg id="barcode"></svg>
+            <button id="print-btn" class="btn btn-print" onclick="window.print()">🖨️ ბეჭდვა</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generate-btn').addEventListener('click', function() {
+            const moveId = document.getElementById('moveId').value.trim();
+            const boxId = document.getElementById('boxId').value.trim();
+
+            // ვალიდაცია ცარიელ ველებზე
+            if (!moveId || !boxId) {
+                alert('გთხოვთ, შეავსოთ ორივე ველი.');
+                return;
+            }
+
+            // მონაცემების შეერთება _ სიმბოლოთი
+            const combinedId = `${moveId}_${boxId}`;
+
+            // ვხსნით დამალულ ბლოკებს
+            document.getElementById('barcode-container').style.display = 'block';
+            document.getElementById('print-btn').style.display = 'block';
+
+            // ბარკოდის გენერაცია
+            JsBarcode("#barcode", combinedId, {
+                format: "CODE128", // სტანდარტული ფორმატი საწყობებისთვის
+                lineColor: "#000",
+                width: 2.5,
+                height: 120,
+                displayValue: true,
+                fontSize: 22,
+                margin: 10,
+                fontOptions: "bold",
+                textMargin: 8
+            });
+        });
+
+        // ენთერზე (Enter) კლავიატურის დაჭერისას გენერაციის გამოძახება
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                document.getElementById('generate-btn').click();
+            }
+        });
+    </script>
+
+</body>
+</html>
