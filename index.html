@@ -126,34 +126,49 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ბეჭდვის სტილები: მალავს ყველაფერს ბარკოდის გარდა */
+        /* ბეჭდვის ახალი სტილები: მალავს ბრაუზერის ზედმეტ ინფორმაციას */
         @media print {
+            
+            /* ეს წესი აშორებს ბრაუზერის ავტომატურ Header/Footer-ს (ლინკს, თარიღს და ა.შ.) */
+            @page {
+                margin: 0;
+            }
+
             body {
                 background: white;
                 display: block;
-                padding: 0;
+                /* ვამატებთ ცოტა Padding-ს, რომ ბარკოდი ფურცლის კიდეს არ შეეჯახოს */
+                padding: 20px;
                 margin: 0;
             }
+
             .container {
                 box-shadow: none;
                 max-width: none;
                 padding: 0;
                 border-radius: 0;
+                /* ვასუფთავებთ კონტეინერს */
+                background: none;
             }
+
+            /* მალავს ყველაფერს ბარკოდის გარდა */
             h2, .input-group, #generate-btn, .btn-print, #barcode-container {
                 border-top: none;
                 padding-top: 0;
                 margin-top: 0;
             }
+
             h2, .input-group, #generate-btn, .btn-print {
                 display: none !important;
             }
+
             #barcode-container {
                 display: flex !important;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                height: 100vh;
+                /* ცენტრში ვაყენებთ მთელ გვერდზე, მაგრამ ვითვალისწინებთ პედინგს */
+                min-height: calc(100vh - 40px);
             }
         }
     </style>
